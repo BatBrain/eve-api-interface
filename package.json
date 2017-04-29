@@ -1,0 +1,25 @@
+{
+  "name": "eve-api-interface",
+  "version": "1.0.0",
+  "description": "An obfuscated interface for EVE's multiple APIs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BatBrain/eve-api-interface.git"
+  },
+  "keywords": [
+    "EVE",
+    "EVE",
+    "Online",
+    "API"
+  ],
+  "author": "BatBrain (Sol Ferguson)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BatBrain/eve-api-interface/issues"
+  },
+  "homepage": "https://github.com/BatBrain/eve-api-interface#readme"
+}

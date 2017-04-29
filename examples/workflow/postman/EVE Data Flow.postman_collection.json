@@ -1,0 +1,445 @@
+/*
+This is a postman workflow export which refreshes the SSO auth token, gets the contract ids for a character, gets contract information for all ids, then fetches market data for The Forge from the eve-central api
+Values that require information provided by the user have been replaced with *_GOES_HERE
+*/
+{
+	"variables": [],
+	"info": {
+		"name": "EVE Data Flow",
+		"_postman_id": "2dea2685-2ec7-2501-620d-8527708349ea",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "https://login.eveonline.com/oauth/verify",
+			"request": {
+				"url": "https://login.eveonline.com/oauth/verify",
+				"method": "GET",
+				"header": [
+					{
+						"key": "//Authorization",
+						"value": "Bearer ACCESS_TOKEN_GOES_HERE",
+						"description": "",
+						"disabled": true
+					}
+				],
+				"body": {},
+				"description": "Gets Character info after SSO auth"
+			},
+			"response": [
+				{
+					"id": "85d4fb43-9adc-4e62-8a57-5b3c3a20fd92",
+					"name": "CREST Character Info",
+					"originalRequest": {
+						"url": "https://login.eveonline.com/oauth/verify",
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"name": "Authorization",
+								"value": "Bearer ACCESS_TOKEN_GOES_HERE",
+								"disabled": false
+							}
+						],
+						"body": {}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"_postman_previewtype": "text",
+					"header": [
+						{
+							"key": "Cache-Control",
+							"value": "private",
+							"name": "Cache-Control",
+							"description": "Tells all caching mechanisms from server to client whether they may cache this object. It is measured in seconds"
+						},
+						{
+							"key": "Connection",
+							"value": "close",
+							"name": "Connection",
+							"description": "Options that are desired for the connection"
+						},
+						{
+							"key": "Content-Length",
+							"value": "206",
+							"name": "Content-Length",
+							"description": "The length of the response body in octets (8-bit bytes)"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8",
+							"name": "Content-Type",
+							"description": "The mime type of this content"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 25 Apr 2017 12:57:01 GMT",
+							"name": "Date",
+							"description": "The date and time that the message was sent"
+						},
+						{
+							"key": "X-Powered-By",
+							"value": "ASP.NET",
+							"name": "X-Powered-By",
+							"description": "Specifies the technology (ASP.NET, PHP, JBoss, e.g.) supporting the web application (version details are often in X-Runtime, X-Version, or X-AspNet-Version)"
+						}
+					],
+					"cookie": [],
+					"responseTime": 817,
+					"body": ""
+				}
+			]
+		},
+		{
+			"name": "Refresh Access Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"if (responseCode.code === 200) {",
+							"    ",
+							"    try {",
+							"        var token_data = JSON.parse(responseBody),",
+							"            Access_token = token_data.access_token,",
+							"            Refresh_token = token_data.refresh_token;",
+							"    }",
+							"    catch(e) {",
+							"        console.log(e);",
+							"    }",
+							"    ",
+							"    postman.setEnvironmentVariable(\"access_token\", Access_token);",
+							"    postman.setEnvironmentVariable(\"refresh_token\", Refresh_token);",
+							"}",
+							"",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"username": "APPLICATION_CLIENT_ID_GOES_HERE",
+						"password": "APPLICATION_SECRET_GOES_HERE",
+						"saveHelperData": true,
+						"showPassword": false
+					}
+				},
+				"url": "https://login.eveonline.com/oauth/token",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"description": ""
+					},
+					{
+						"key": "Authorization",
+						"value": "Basic ACCESS_TOKEN_GOES_HERE",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"disabled": false,
+							"key": "grant_type",
+							"value": "refresh_token",
+							"enabled": true,
+							"type": "text"
+						},
+						{
+							"disabled": false,
+							"key": "refresh_token",
+							"value": "REFRESH_TOKEN_GOES_HERE",
+							"enabled": true,
+							"type": "text"
+						}
+					]
+				},
+				"description": "Gets new token and sets access and refresh to env vars"
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch Contracts and IDs",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"if (responseCode.code === 200) {",
+							"    ",
+							"    try {",
+							"        var jsonObject = xml2Json(responseBody);",
+							"        var AllContracts = [];",
+							"        ",
+							"        (jsonObject.eveapi.result.rowset.row).forEach(function(contract) {",
+							"            AllContracts.push(contract.$);",
+							"        });",
+							"        ",
+							"        var AllContractIDs = ",
+							"        AllContracts.map(function(elm) {",
+							"            return elm.contractID;",
+							"        }).join(\",\");",
+							"        console.log(AllContractIDs);",
+							"        ",
+							"    }",
+							"    catch(e) {",
+							"        console.log(e);",
+							"    }",
+							"    postman.clearGlobalVariable(\"all_contracts\");",
+							"    postman.setGlobalVariable(\"all_contracts\", JSON.stringify(AllContracts)); ",
+							"    postman.setGlobalVariable(\"ids_to_fetch\", AllContractIDs);",
+							"}",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": {
+						"username": "APPLICATION ID GOES HERE",
+						"password": "APPLICATION SECRET KEY GOES HERE",
+						"saveHelperData": true,
+						"showPassword": false
+					}
+				},
+				"url": "{{XML}}/char/Contracts.xml.aspx?characterID={{CharID}}&accessToken={{access_token}}",
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic ACCESS_TOKEN_GOES_HERE",
+						"description": ""
+					}
+				],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Fetch Single Contract Details",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"if (responseCode.code === 200) {",
+							"    ",
+							"    try {",
+							"        var jsonObject = xml2Json(responseBody);",
+							"        var ContractItems = [];",
+							"        ",
+							"        (jsonObject.eveapi.result.rowset.row).forEach(function(item) {",
+							"            ContractItems.push(item.$);",
+							"        });",
+							"        ",
+							"        var AllTypeIDs = ",
+							"        ContractItems.map(function(elm) {",
+							"            return elm.typeID;",
+							"        }).join(\",\");",
+							"        console.log(ContractItems);",
+							"        console.log(AllTypeIDs);",
+							"        ",
+							"    }",
+							"    catch(e) {",
+							"        console.log(e);",
+							"    }",
+							"    postman.setGlobalVariable(\"contract_items\", JSON.stringify(ContractItems)); ",
+							"    postman.setGlobalVariable(\"contract_items_ids\", AllTypeIDs);",
+							"}"
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "{{XML}}/char/ContractItems.xml.aspx?characterID={{CharID}}&contractID=117648644&accessToken={{access_token}}",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Get Item Names",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"if (responseCode.code === 200) {",
+							"    ",
+							"    try {",
+							"        var jsonObject = xml2Json(responseBody);",
+							"        var ItemNames = [];",
+							"        ",
+							"        (jsonObject.eveapi.result.rowset.row).forEach(function(item) {",
+							"            ItemNames.push(item.$);",
+							"        });",
+							"        ",
+							"    }",
+							"    catch(e) {",
+							"        console.log(\"Error!\");",
+							"        console.log(e);",
+							"    }",
+							"    try {",
+							"        var ContractItems = JSON.parse(postman.getGlobalVariable(\"contract_items\"))",
+							"        ",
+							"        ContractItems.forEach(function(item){",
+							"            var xyz =",
+							"            ItemNames.find(function(elm){",
+							"                return elm.typeID === item.typeID",
+							"            })",
+							"            Object.assign(item, xyz);",
+							"        })",
+							"    }",
+							"    catch(e) {",
+							"        console.log(\"Error!\");",
+							"        console.log(e);",
+							"    }",
+							"    postman.setGlobalVariable(\"contract_items\", JSON.stringify(ContractItems));   ",
+							"}",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "{{XML}}/eve/TypeName.xml.aspx?ids={{contract_items_ids}}",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Get Item Prices from EVECentral",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"if (responseCode.code === 200) {",
+							"        ",
+							"    var MarketInfo = JSON.parse(responseBody)",
+							"    ",
+							"    var ContractItems = JSON.parse(postman.getGlobalVariable(\"contract_items\"))",
+							"        ",
+							"        ContractItems.forEach(function(item){",
+							"            item[\"priceInfo\"] = {}",
+							"            var target = item.priceInfo",
+							"            var xyz =",
+							"            MarketInfo.find(function(elm){",
+							"                return elm.all.forQuery.types[0] == item.typeID",
+							"            })",
+							"            Object.assign(target, xyz)",
+							"        })",
+							"    console.log(ContractItems);",
+							"    postman.setGlobalVariable(\"contract_items\", JSON.stringify(ContractItems));",
+							"}",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "{{evecentral}}?typeid={{contract_items_ids}}&regionlimit={{theforge}}",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Parse to paths",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"tests[\"Status code is 200\"] = responseCode.code === 200;",
+							"",
+							"if (responseCode.code === 200) {",
+							"    var jsonObject = xml2Json(responseBody);  ",
+							"    var ResponseJson = jsonObject.eveapi.result.rowset;",
+							"    ",
+							"    var pathsObj = [",
+							"        { path : {",
+							"                \"/account\" : []",
+							"            }",
+							"        },",
+							"        { path : {",
+							"            \"/char\" : []",
+							"            }",
+							"        },",
+							"        { path : {",
+							"            \"/corp\" : []",
+							"            }",
+							"        },",
+							"        { path : {",
+							"            \"/eve\" : []",
+							"            }",
+							"        },",
+							"        { path : {",
+							"            \"/map\" : []",
+							"            }",
+							"        }",
+							"    ];",
+							"    var list = { paths : {}}",
+							"    ResponseJson[1].row.forEach(function(call) {",
+							"        var uri = \"/\"+call.$.type+\"/\"+call.$.name",
+							"        var obj = {}",
+							"        obj[uri] = {}",
+							"        Object.assign(obj[uri], {description : call.$.description})",
+							"        Object.assign(list.paths, obj)",
+							"    })",
+							"    console.log(list)",
+							"}",
+							"",
+							"",
+							""
+						]
+					}
+				}
+			],
+			"request": {
+				"url": "{{XML}}//api/CallList.xml.aspx?authorization=bearer {{access_token}}",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
