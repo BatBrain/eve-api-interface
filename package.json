@@ -21,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/BatBrain/eve-api-interface/issues"
   },
-  "homepage": "https://github.com/BatBrain/eve-api-interface#readme"
+  "homepage": "https://github.com/BatBrain/eve-api-interface#readme",
+  "devDependencies": {
+    "scrape-it": "^3.3.2"
+  }
 }
