@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/BatBrain/eve-api-interface#readme",
   "devDependencies": {
+    "line-by-line": "^0.1.5",
     "scrape-it": "^3.3.2"
   }
 }

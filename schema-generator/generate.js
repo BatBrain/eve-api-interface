@@ -1,12 +1,33 @@
 //uses npm scrape-it module to scrape 3rd party documentation website for current XML API structure and schema
 "use strict"
-const scrapeIt = require("scrape-it");
+const scrapeIt            = require("scrape-it");
+const fs                  = require('fs');
+const LineByLineReader    = require('line-by-line'), lr = new LineByLineReader('documentation-urls.txt');
 
-// Callback interface
-scrapeIt(
-  "http://eveonline-third-party-documentation.readthedocs.io/en/latest/xmlapi/character/char_contracts.html",
-  {
-    // Fetch the articles
+
+var finalOutput = {
+  routes : []
+};
+
+lr.on('error', function (err) {})
+.on('line', function (line) {
+	lr.pause();
+    console.log(line)
+    scraper(line)
+
+	}, 100)
+.on('end', function () {
+  var jsonToWrite = JSON.stringify(finalOutput);
+  fs.writeFile('API-Endpoints.json', jsonToWrite, 'utf8', (err) => {
+    if (err) throw err;
+    console.log('The file has been saved!');
+  });
+});
+
+
+function scraper(url) {
+  scrapeIt( url ,
+    {
       uri : {
         selector : "code.docutils.literal > span.pre"
       },
@@ -22,11 +43,13 @@ scrapeIt(
           return x.replace(/[^\,\.\\\)\(\w]{2,}/g, "*n*").splitEvery("*n*", 3)
         }
       }
-  },
-  (err, page) => {
-    console.log(err || page);
-  }
-);
+    },
+    (err, page) => {
+      finalOutput.routes.push(page)
+      lr.resume();
+    });
+}
+
 
 String.prototype.splitEvery = function ( splitter, every ){
 
